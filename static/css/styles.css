@@ -1,0 +1,180 @@
+body {
+    font-family: Arial, sans-serif;
+
+}
+
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f4f4f4;
+    padding: 0px 10px; /* This adjusts the padding of shared timer header */
+    position: relative;
+
+}
+
+h2 {
+    margin: 0;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1in;
+    height: 1in;
+    background-color: #f4f4f4;
+    border-radius: 50%;
+    margin-right: 0.25in;
+}
+/* To ensure the last button doesn't have extra space to its right */
+.timer-controls button:last-child {
+    margin-right: 0;
+}
+.close-btn::before {
+    content: '\00D7';  /* This is a multiplication sign that looks like a close button */
+    font-size: 20px;
+    position: absolute;
+    top: 10px;  /* Adjust based on your design */
+    right: 15px;  /* Adjust based on your design */
+}
+.timer-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+.timer-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 3in;  /* Width as per your specification */
+    height: 2in; /* Height as per your specification */
+    margin: 20px auto; /* Center the timer with some margin around it */
+    font-size: 2em; /* Adjust to make the timer value visibly large */
+    border: 2px solid #ccc;
+    margin-top: 35px; /* Adds space above the timer display. Adjust the '15px' value to your liking. */
+    margin-bottom: 35px; /* Adds space below the header. Adjust the '15px' value to your liking. */
+    padding: 15px 0;
+    background-color: #fff;
+
+}
+.time-section {
+    display: inline-block;
+    text-align: center; /* This will center the arrows over their respective input box */
+    vertical-align: middle; /* Aligns with the semicolon */
+    margin: 0 5px; /* This adds space between the minutes and seconds sections. Adjust as needed. */
+}
+.time-component span:not(.arrow) {
+    /* This selector will target the semicolon but not the arrows */
+    font-size: 2.00em; /* Adjust this value as needed to change the size of the semicolon */
+    vertical-align: middle;
+}
+.time-component .arrow {
+    color: blue;
+    cursor: pointer;
+    margin: 0 5px;
+    font-size: 1.5em;  /* Adjust this value to make the arrows smaller or larger */
+
+}
+.time-component input {
+    border: none;
+    font-size: 2.00em;
+    width: 35px;
+    text-align: center;
+    background-color: transparent;
+}
+.time-component input:focus {
+    outline: none;
+    border-bottom: 2px solid blue;
+}
+.icon-btn img {     /* This is for all icon buttons. */
+    max-width: 100%;
+    max-height: 100%;
+}
+/* Specific styling for the play icon. Adjust the width and height values here to change its size */
+#playPauseBtn img {
+    width: 55%; /* Adjust this value to increase or decrease the play button size */
+    height: auto; /* Keeps the aspect ratio */
+}
+.clear-btn, reset-btn {
+    width: 0.50in;
+    height: 0.50in;
+}
+.launch-button, .refresh-button {
+    display: flex;
+    height: 50px;
+    padding: 0 8px; /* Padding on the sides of the button */
+    border: none;
+    outline: none;
+    border-radius: 5px;
+    overflow: hidden;
+    font-family: "Quicksand", sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    margin: 10px 0;
+    width: fit-content;  /* fit the width to the content */
+    position: relative;  /* To ensure the icon is positioned relative to the button */
+}
+
+.launch-button__text, .refresh-button__text {
+    color: #fff;
+    align-self: center; /* vertically centers the text */
+    padding-right: 30px;  /* Adding padding to the right of the text so there's space before the image */
+    flex-grow: 1;  /* This will make the text take all the available space and push the image to the right */
+}
+
+
+.launch-button__icon, .refresh-button__icon {
+    ...
+    width: 50px;  /* The width of the square container */
+    height: 50px; /* The height of the square container */
+    background: rgba(0, 0, 0, 0.08);
+    position: absolute;  /* So it doesn't affect the positioning of other elements */
+    right: 0;  /* To place it on the right edge of the button */
+    top: 0;  /* To start it at the top of the button */
+    display: flex;
+    align-items: center;
+    justify-content: center;  /* This centers the image within the square */
+}
+
+.launch-button__icon img, .refresh-button__icon img {
+    max-width: 70%;  /* This scales down the image to fit inside the square */
+    max-height: 70%; /* Ensuring the image is contained within the square */
+}
+
+.launch-button {
+    background: #009578;
+}
+
+.launch-button:hover {
+    background: #008168;
+}
+
+.launch-button:active {
+    background: #006e58;
+}
+
+.refresh-button {
+    margin-bottom: 20px; /* Adjust this value according to the space you want */
+    background: #007BFF;
+}
+
+
+.refresh-button:hover {
+    background: #0069d9;
+}
+
+.refresh-button:active {
+    background: #0056b3;
+}
+.arrow.disabled {
+    color: #888888; /* grayed out color */
+    cursor: not-allowed;
+}
+

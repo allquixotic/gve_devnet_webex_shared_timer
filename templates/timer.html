@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Timer App</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="https://binaries.webex.com/static-content-pipeline/webex-embedded-app/v1/webex-embedded-app-sdk.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="{{ url_for('static', filename='js/timer.js') }}" defer></script>
+
+</head>
+<body>
+    <div class="app-header">
+        <h2>Shared Timer</h2>
+        <button id="lockControlsBtn" class="icon-btn lock-btn" onclick="toggleControls()" aria-label="Lock/Unlock Controls">
+            <span id="lockSymbol">&#128275;</span> <!-- Unicode lock symbol -->
+        </button>
+    </div>
+
+    <div class="timer-display">
+        <div class="time-component">
+            <!-- Container for minutes input and its arrows -->
+            <div class="time-section">
+                <span class="arrow" onclick="adjustTime('minutes', 'up')">&#9650;</span><br>
+                <input id="minutes" type="text" maxlength="2" value="00" style="width: 75px;" oninput="validateInput(this)" onkeyup="handleInputKeyup(event, 'minutes')"><br>
+
+                <span class="arrow" onclick="adjustTime('minutes', 'down')">&#9660;</span>
+            </div>
+
+            <!-- Just the semicolon -->
+            <span>:</span>
+
+            <!-- Container for seconds input and its arrows -->
+            <div class="time-section">
+                <span class="arrow" onclick="adjustTime('seconds', 'up')">&#9650;</span><br>
+                <input id="seconds" type="text" maxlength="2" value="00" style="width: 75px;" oninput="validateInput(this)" onkeyup="handleInputKeyup(event, 'seconds')"><br>
+                <span class="arrow" onclick="adjustTime('seconds', 'down')">&#9660;</span>
+            </div>
+        </div>
+    </div>
+    <div class="timer-controls">
+        <button id="clearBtn" class="icon-btn" aria-label="Clear" onclick="clearTimer()">
+            <img src="/static/images/clear-icon.png" alt="Clear Icon">
+        </button>
+        <button id="playPauseBtn" class="icon-btn" aria-label="Play/Pause" data-running="false" onclick="toggleTimer()">
+            <img id="playPauseImg" src="/static/images/play-icon.png" alt="Play Icon">
+        </button>
+        <button id="resetBtn" class="icon-btn" aria-label="Reset" onclick="resetTimer()">
+            <img src="/static/images/reset-icon.png" alt="Reset Icon">
+        </button>
+    </div>
+
+</body>
+</html>
