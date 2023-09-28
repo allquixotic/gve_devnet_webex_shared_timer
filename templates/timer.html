@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Custom Timer App</title>
+    <link rel="stylesheet" href="/static/css/cisco-ui-kit.css">
     <link rel="stylesheet" href="/static/css/styles.css">
     <script src="https://binaries.webex.com/static-content-pipeline/webex-embedded-app/v1/webex-embedded-app-sdk.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
@@ -44,7 +45,7 @@
             <img src="/static/images/clear-icon.png" alt="Clear Icon">
         </button>
         <button id="playPauseBtn" class="icon-btn" aria-label="Play/Pause" data-running="false" onclick="toggleTimer()">
-            <img id="playPauseImg" src="/static/images/play-icon.png" alt="Play Icon">
+            <span id="playPauseIcon" class="icon-play"></span>
         </button>
         <button id="resetBtn" class="icon-btn" aria-label="Reset" onclick="resetTimer()">
             <img src="/static/images/reset-icon.png" alt="Reset Icon">

@@ -178,3 +178,21 @@ h2 {
     cursor: not-allowed;
 }
 
+.icon-btn #playPauseIcon::before {
+    font-size: 36px;  /* Adjust font size as needed */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.icon-play::before {
+    content: '\25B6'; /* Unicode for right-pointing triangle (play symbol) */
+    color: green; /* or any color you prefer */
+}
+
+.icon-pause::before {
+    content: '\275A\275A'; /* Unicode for vertical bars (pause symbol) */
+    color: red; /* or any color you prefer */
+}

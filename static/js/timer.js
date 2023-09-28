@@ -3,10 +3,20 @@ let arrowButtonsEnabled = true;
 let isLocked = false;
 let lockerID = null;
 let isRunning = false;
-let currentMinutes, currentSeconds;
+let currentMinutes;
+let currentSeconds;
+let sessionLocks = {};
+
+// Define the Webex application
+var app = new window.Webex.Application();
+// Extract meetingID from the URL
+var urlParams = new URLSearchParams(window.location.search);
+var meetingID = urlParams.get('meetingID');
+
 
 socket.on('connect', () => {
     console.error('Connected to Server');
+    socket.emit('session_init', { sessionId: meetingID });
 });
 
 socket.on('connect_error', (error) => {
@@ -17,13 +27,20 @@ socket.on('timer_update', function(data) {
     try{
         console.log('Received timer_update event:', data);
 
-        isRunning = data.running;
-        currentMinutes = data.minutes;
-        currentSeconds = data.seconds;
-        updateTimerDisplay(currentMinutes, currentSeconds);
-        } catch (error) {
-            console.error('Error processing timer_update event:', error);
+        // Extract the timer state for the specific meeting/session
+        let sessionData = data[meetingID];
+        if (!sessionData) {
+            console.error('No timer data found for the session:', meetingID);
+            return;
         }
+
+        isRunning = sessionData.running;
+        currentMinutes = sessionData.minutes;
+        currentSeconds = sessionData.seconds;
+        updateTimerDisplay(currentMinutes, currentSeconds);
+    } catch (error) {
+        console.error('Error processing timer_update event:', error);
+    }
 });
 
 function updateTimerDisplay(minutes, seconds) {
@@ -34,10 +51,10 @@ function updateTimerDisplay(minutes, seconds) {
     }
 
     if (isRunning) {
-        document.getElementById('playPauseImg').src = "/static/images/pause-icon.png";
+        document.getElementById('playPauseIcon').className = 'icon-pause';
         document.getElementById('playPauseBtn').setAttribute('data-running', 'true');
     } else {
-        document.getElementById('playPauseImg').src = "/static/images/play-icon.png";
+        document.getElementById('playPauseIcon').className = 'icon-play';
         document.getElementById('playPauseBtn').setAttribute('data-running', 'false');
     }
 
@@ -46,13 +63,14 @@ function updateTimerDisplay(minutes, seconds) {
 
 function requestTimerUpdate() {
     // get timer time
-    socket.emit('get_timer');
+    socket.emit('get_timer', { sessionId: meetingID });
+
 }
 
 function adjustTime(unit, direction) {
     if (arrowButtonsEnabled) { // Check if arrow buttons are enabled
         let eventName = direction === 'up' ? 'increment_timer' : 'decrement_timer';
-        socket.emit(eventName, { unit: unit });
+        socket.emit(eventName, { unit: unit, sessionId: meetingID });
     }
 }
 
@@ -67,23 +85,23 @@ function handleInputKeyup(event, unit) {
             event.target.value = newValue.toString().padStart(2, '0');
 
             // Update the timer using the adjusted value
-            socket.emit('set_timer', { unit: unit, value: newValue });
+            socket.emit('set_timer', { unit: unit, value: newValue, sessionId: meetingID});
         }
     }
 }
 
 function startTimer() {
     console.log('startTimer called');
-    socket.emit('start_timer');
-    document.getElementById('playPauseImg').src = "/static/images/pause-icon.png";
+    socket.emit('start_timer', { sessionId: meetingID });
+    document.getElementById('playPauseIcon').className = 'icon-pause';
     document.getElementById('playPauseBtn').setAttribute('data-running', 'true');
     isRunning = true;  // Update the isRunning variable
 }
 
 function stopTimer() {
     console.log('stopTimer called');
-    socket.emit('stop_timer');
-    document.getElementById('playPauseImg').src = "/static/images/play-icon.png";
+    socket.emit('stop_timer', { sessionId: meetingID });
+    document.getElementById('playPauseIcon').className = 'icon-play';
     document.getElementById('playPauseBtn').setAttribute('data-running', 'false');
     isRunning = false;  // Update the isRunning variable
 }
@@ -99,13 +117,41 @@ function toggleTimer() {
 }
 
 function resetTimer() {
-    socket.emit('reset_timer');
+    socket.emit('reset_timer', { sessionId: meetingID });
 }
 
 function clearTimer() {
-    socket.emit('clear_timer');
+    socket.emit('clear_timer', { sessionId: meetingID });
 }
 
+socket.on('lock', function(data) {
+    let sessionId = data.sessionId;
+    sessionLocks[sessionId] = { isLocked: true, lockerID: data.lockerID };
+    updateLockState(sessionId);
+});
+
+socket.on('unlock', function(data) {
+    let sessionId = data.sessionId;
+    sessionLocks[sessionId] = { isLocked: false, lockerID: null };
+    updateLockState(sessionId);
+});
+function updateLockState(sessionId) {
+    let lockState = sessionLocks[sessionId];
+    if (lockState) {
+        document.getElementById("lockSymbol").innerHTML = lockState.isLocked ? "&#128274;" : "&#128275;";
+        disableControls(lockState.isLocked, sessionId);
+    }
+}
+
+function toggleControls() {
+    let currentSessionLock = sessionLocks[meetingID] || { isLocked: false, lockerID: null };
+    if (!currentSessionLock.isLocked || (currentSessionLock.isLocked && socket.id === currentSessionLock.lockerID)) {
+        currentSessionLock.isLocked = !currentSessionLock.isLocked;
+        sessionLocks[meetingID] = currentSessionLock;
+        socket.emit('toggle_lock', { locked: currentSessionLock.isLocked, sessionId: meetingID });
+        updateLockState(meetingID);
+    }
+}
 function disableControls(disabled) {
     let arrows = document.querySelectorAll('.arrow');
     let otherButtons = document.querySelectorAll('.icon-btn, .arrow, .clear-btn, .reset-btn'); // Add dots before class names
@@ -127,28 +173,6 @@ function disableControls(disabled) {
     arrowButtonsEnabled = !disabled;
 }
 
-function toggleControls() {
-    if (!isLocked || (isLocked && socket.id === lockerID)) {
-        isLocked = !isLocked;
-        socket.emit('toggle_lock', { locked: isLocked });
-        disableControls(isLocked);
-    }
-}
-
-socket.on('lock', function(data) {
-    isLocked = true;
-    lockerID = data.lockerID;
-    document.getElementById("lockSymbol").innerHTML = "&#128274;"; // Unicode unlock symbol
-    disableControls(true);
-});
-
-socket.on('unlock', function(data) {
-    isLocked = false;
-    lockerID = null;
-    document.getElementById("lockSymbol").innerHTML = "&#128275;"; // Unicode unlock symbol
-
-    disableControls(false);
-});
 
 document.addEventListener("DOMContentLoaded", () => {
     requestTimerUpdate();
