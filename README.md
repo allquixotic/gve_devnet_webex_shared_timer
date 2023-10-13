@@ -38,18 +38,18 @@ PUBLIC_URL=YOUR_FLASK_ENDPOINT_URL
 
 ## Installation/Configuration
 1. Clone this repository with `git clone https://wwwin-github.cisco.com/gve/gve_devnet_webex_shared_timer.git`
-2. Set up a Python virtual environment. Make sure Python 3 is installed in your environment, and if not, you may download Python [here](https://www.python.org/downloads/). Once Python 3 is installed in your environment, you can activate the virtual environment with the instructions found [here](https://docs.python.org/3/tutorial/venv.html).
+2. Ensure Docker is installed.
 3. Set up your `.env` file as per the instructions above.
 4. Install the requirements with `pip3 install -r requirements.txt`
 
 
 ## Usage
 1. Run the program.
-2. Select "Open and share my personal information" & click "Open."
+2. If the app is still in development: "Open and share my personal information" & click "Open."
 
 Run the program, using the command:
-```
-$ python3 app.py
+```shell
+docker-compose up --build
 ```
 
 * Note if using ngrok to test the application on a local machine, you will have to click 'visit' after step 2.

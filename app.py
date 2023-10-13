@@ -19,6 +19,7 @@ from flask_socketio import SocketIO
 from funcs import LoggerManager, EnvironmentManager
 from datetime import datetime
 from threading import Lock, Event
+from rich.panel import Panel
 
 logger_manager = LoggerManager()
 EnvironmentManager.validate_env_variables()
@@ -112,7 +113,6 @@ def handle_get_timer_event(data):
     socketio.emit('timer_update', {session_id: timer_state[session_id]})
     print(f"DEBUG: timer_state before log: {timer_state}")
     logger_manager.log("Starting new timer session", timer_state, session_id=session_id)
-    logger_manager.logger.info(f'Handling get_timer event with session ID: {session_id}: {timer_state[session_id]}')
 
 
 @socketio.on('start_timer')
@@ -243,8 +243,6 @@ def handle_decrement_timer_event(data):
 @socketio.on('toggle_lock')
 def handle_lock_event(data):
     session_id = data.get('sessionId')
-    print(f"Received toggle_lock event for session {session_id}: {data}")
-
     if session_id not in lock_state:
         lock_state[session_id] = {'locked': False, 'lockerID': None}
 
@@ -262,4 +260,12 @@ def handle_lock_event(data):
 
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=9001, debug=True)
+    try:
+        # Title Panel
+        logger_manager.console.print(Panel.fit("[bold deep_sky_blue3]FedRAMP Webex Shared Timer[/bold deep_sky_blue3]"))
+
+        socketio.run(app, host='0.0.0.0', port=9001, debug=False)
+    except KeyboardInterrupt:
+        print("\n")
+        logger_manager.console.print(Panel.fit("Shutting down...", title="[bright_red]Script Exited[/bright_red]"))
+

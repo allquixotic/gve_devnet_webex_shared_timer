@@ -2,6 +2,7 @@ import rich
 from rich.console import Console
 from rich.table import Table
 from rich import print as rprint
+from rich.panel import Panel
 import rich.logging
 from dotenv import load_dotenv
 import logging
@@ -83,6 +84,7 @@ class LoggerManager:
             # Set up the table columns only once per session
             self.setup_table_columns(self.session_logs[session_id]['table'])
 
+        # Correcting the way we access timer_state
         session_timer_state = timer_state.get(session_id, {})
 
         log_entry = {
@@ -105,7 +107,7 @@ class LoggerManager:
         table.add_column("Minutes", width=10)
         table.add_column("Seconds", width=10)
         table.add_column("State", width=10)
-        table.add_column("Timestamp", width=20, style="dim")
+        table.add_column("Timestamp", width=20)
 
     def update_table(self, table, log_entry):
         table.add_row(log_entry['message'],
@@ -118,10 +120,7 @@ class LoggerManager:
         if session_id in self.session_logs:
             # Clearing the console
             self.console.clear()
-            # Printing the session ID in bright blue above the table
-            self.console.print(f"Session ID: [bold blue]{session_id}[/bold blue]")
-            # Print the existing table for the session ID
-            self.console.print(self.session_logs[session_id]['table'])
+            self.console.print(Panel.fit(self.session_logs[session_id]['table'], title=f"[bold deep_sky_blue3]Log for Session ID: {session_id}[/bold deep_sky_blue3]"))
         else:
             self.logger.error(f"No session logs found for session_id: {session_id}")
 
@@ -138,3 +137,43 @@ class LoggerManager:
         """Restore logger to its original level."""
         self.logger.setLevel(self.original_log_level)
 
+    def flatten_json(self, y):
+        """Recursively flatten nested dictionaries."""
+        out = {}
+
+        def flatten(x, name=''):
+            if type(x) is dict:
+                for a in x:
+                    flatten(x[a], name + a + '.')
+            else:
+                out[name[:-1]] = x
+
+        flatten(y)
+        return out
+
+    def log_flattened_event_data(self, event):
+        """Log individual event data in a two-column table: Key, Value."""
+
+        # Suppress any other logging for now
+        self.suppress_logging()
+
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Key", width=100)
+        table.add_column("Value", width=50)
+
+        flattened_data = self.flatten_json(event)
+
+        # Check for the access_token dictionary and handle it specially
+        if "Token" in flattened_data:
+            access_token_data = eval(flattened_data["Token"])  # Convert string representation back to dictionary
+            for key, value in access_token_data.items():
+                table.add_row("Token." + key, str(value))
+            del flattened_data["Token"]  # Remove it from the flattened_data since we've handled it
+
+        for key, value in flattened_data.items():
+            table.add_row(key, str(value))
+
+        rprint(table)
+
+        # Restore logging level after table is printed
+        self.restore_logging()

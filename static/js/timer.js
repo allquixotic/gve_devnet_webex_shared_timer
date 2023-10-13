@@ -135,7 +135,12 @@ socket.on('unlock', function(data) {
     sessionLocks[sessionId] = { isLocked: false, lockerID: null };
     updateLockState(sessionId);
 });
+
 function updateLockState(sessionId) {
+    if (sessionId !== meetingID) {
+        // If the session ID from the socket message does not match the current session ID, do nothing.
+        return;
+    }
     let lockState = sessionLocks[sessionId];
     if (lockState) {
         document.getElementById("lockSymbol").innerHTML = lockState.isLocked ? "&#128274;" : "&#128275;";
