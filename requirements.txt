@@ -31,6 +31,8 @@ simple-websocket==0.10.1
 six==1.16.0
 socketio==0.2.1
 tzlocal==5.0.1
+ua-parser==0.18.0
 urllib3==2.0.4
+user-agents==2.2.0
 Werkzeug==2.3.7
 wsproto==1.2.0

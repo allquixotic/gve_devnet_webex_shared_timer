@@ -12,7 +12,7 @@ IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
 or implied.
 """
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, abort
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask_cors import CORS
 from flask_socketio import SocketIO
@@ -20,6 +20,8 @@ from funcs import LoggerManager, EnvironmentManager
 from datetime import datetime
 from threading import Lock, Event
 from rich.panel import Panel
+import signal
+import sys
 
 logger_manager = LoggerManager()
 EnvironmentManager.validate_env_variables()
@@ -36,13 +38,27 @@ stop_event = Event()
 
 app = Flask(__name__)
 
-CORS(app, origins=["http://127.0.0.1:9001"])
+
+# Signal handler for graceful Flask app shutdown
+def signal_handler(sig, frame):
+    logger_manager.console.print("\n")
+    logger_manager.console.print(Panel.fit("Shutting Down...", title="[bright_red]Exit[/bright_red]"))
+    sys.exit(0)  # Exit the application gracefully
+
+
+# Register the signal handler
+signal.signal(signal.SIGINT, signal_handler)
+
+# Enable CORS for the app
+CORS(app, origins=[EnvironmentManager.PUBLIC_URL])
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+# Initialize BackgroundScheduler for background tasks
 scheduler = BackgroundScheduler()
 scheduler.start()
 
 
+# Background thread to manage timers
 def background_thread(session_id):
     global timer_state
     logger_manager.logger.info(f'Starting background thread (timer) for session: {session_id}: {timer_state[session_id]}')
@@ -77,44 +93,71 @@ def background_thread(session_id):
         logger_manager.logger.info(f'Emitted timer_update event with session id: {session_id}: {timer_state[session_id]}')
 
 
+# Add the specific User-Agent strings for the allowed apps
+ALLOWED_USER_AGENTS = [
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)",  # Mac Webex app
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.46"  # Windows Webex app
+]
+
+
+@app.before_request
+def limit_remote_addr():
+    user_agent = request.headers.get('User-Agent')
+    if user_agent not in ALLOWED_USER_AGENTS:
+        abort(403)  # Forbidden
+    # If the User-Agent is in the list, we don't do anything and the request is processed normally.
+
+
+# Route for the home page
 @app.route('/')
 def index():
-    return render_template('index.html', PUBLIC_URL=EnvironmentManager.PUBLIC_URL)
+    return render_template('index.html', PUBLIC_URL=EnvironmentManager.PUBLIC_URL, IS_PRODUCTION=EnvironmentManager.IS_PRODUCTION)
 
 
+# Route for the timer page
 @app.route('/timer')
 def timer():
     return render_template('timer.html')
 
 
+# Socket.IO event handler for client connection
 @socketio.on('connect')
 def handle_connect():
     sid = request.sid
     logger_manager.logger.info('Client connected: %s', sid)
+    # Iterate through all sessions and emit the current lock state for each
+    for session_id, state in lock_state.items():
+        if state['locked']:
+            socketio.emit('lock', {'lockerID': state['lockerID'], 'sessionId': session_id}, to=sid)
+        else:
+            socketio.emit('unlock', {'lockerID': state['lockerID'], 'sessionId': session_id}, to=sid)
 
 
+# Socket.IO event handler for session initialization
 @socketio.on('session_init')
 def handle_session_init(data):
     session_id = data.get('sessionId')
     logger_manager.logger.info('Received session id: %s', session_id)
 
 
+# Socket.IO event handler for client disconnection
 @socketio.on('disconnect')
 def handle_disconnect():
     sid = request.sid
     logger_manager.logger.info('Client connected: %s', sid)
 
 
+# Socket.IO event handler for getting timer information
 @socketio.on('get_timer')
 def handle_get_timer_event(data):
     session_id = data.get('sessionId')
     if session_id not in timer_state:
         timer_state[session_id] = {'minutes': 0, 'seconds': 0, 'running': False}  # Initialize if not already present
     socketio.emit('timer_update', {session_id: timer_state[session_id]})
-    print(f"DEBUG: timer_state before log: {timer_state}")
     logger_manager.log("Starting new timer session", timer_state, session_id=session_id)
 
 
+# Socket.IO event handler for getting timer information
 @socketio.on('start_timer')
 def handle_start_timer_event(data):
     global thread, stop_event, timer_state, previous_timer_state
@@ -260,12 +303,6 @@ def handle_lock_event(data):
 
 
 if __name__ == '__main__':
-    try:
-        # Title Panel
-        logger_manager.console.print(Panel.fit("[bold deep_sky_blue3]FedRAMP Webex Shared Timer[/bold deep_sky_blue3]"))
-
-        socketio.run(app, host='0.0.0.0', port=9001, debug=False)
-    except KeyboardInterrupt:
-        print("\n")
-        logger_manager.console.print(Panel.fit("Shutting down...", title="[bright_red]Script Exited[/bright_red]"))
-
+    # Title Panel
+    logger_manager.console.print(Panel.fit("[bold deep_sky_blue3]Custom Webex Shared Timer[/bold deep_sky_blue3]"))
+    socketio.run(app, host='0.0.0.0', port=9001, debug=False)

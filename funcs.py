@@ -27,7 +27,20 @@ class EnvironmentManager:
                                    ignoring attributes related to the class internals or the os module.
     """
 
+    MANDATORY_ENV_VARS = ['PUBLIC_URL']
+
     PUBLIC_URL = os.getenv('PUBLIC_URL')
+    # Get the environment variable 'FLASK_ENV'. If it's not set, default to 'development'.
+    FLASK_ENV = os.environ.get('FLASK_ENV', 'development').lower()  # Convert the value to lowercase
+    IS_PRODUCTION = FLASK_ENV == 'production'  # Determine if the environment is production.
+    LOGGER_LEVEL = os.getenv('LOGGER_LEVEL', '').upper() or 'DEBUG'
+
+    @classmethod
+    def handle_error(cls, error_message):
+        """Handles errors by printing an error message and exiting the program."""
+        console = Console()
+        console.print(f"[bold red]Error:[/bold red] {error_message}", highlight=False)
+        exit(1)
 
     @classmethod
     def validate_env_variables(cls):
@@ -38,18 +51,21 @@ class EnvironmentManager:
         table.add_column("Variable", justify="left", style="bright_white", width=30)
         table.add_column("Value", style="bright_white", width=60)
 
-        for var_name, var_value in cls.__dict__.items():
-            if "os" in var_name or "__" in var_name or isinstance(var_value, classmethod):  # ignore class documentation & methods
-                continue
-            table.add_row(var_name, str(var_value) if var_value is not None else "Not Set")
-            if var_value in ("", None):
-                missing_vars.append(var_name)
+        # Update LOGGER_LEVEL if IS_PRODUCTION is True
+        if cls.IS_PRODUCTION:
+            cls.LOGGER_LEVEL = 'CRITICAL'
 
+        for var_name, var_value in cls.__dict__.items():
+            if "os" in var_name or "__" in var_name or isinstance(var_value, classmethod) or var_name == 'MANDATORY_ENV_VARS':
+                continue
+            table.add_row(var_name, str(var_value) if var_value not in [None, ""] else "Not Set")
+            if var_name in cls.MANDATORY_ENV_VARS and var_value in [None, ""]:
+                missing_vars.append(var_name)
         # Display the table
         console.print(table)
 
         if missing_vars:
-            raise EnvironmentError(f"The following environment variables are not set: {', '.join(missing_vars)}")
+            cls.handle_error(f"The following environment variables are not set: {', '.join(missing_vars)}")
 
 
 class LoggerManager:
@@ -68,8 +84,15 @@ class LoggerManager:
         file_handler.setFormatter(logging.Formatter(log_format))
 
         logger = logging.getLogger(__name__)
-        # logger.setLevel(logging.INFO)  # default log level
-        logger.setLevel(logging.ERROR)  # supress logs
+        # Determine the log level based on IS_PRODUCTION from EnvironmentManager
+        if EnvironmentManager.IS_PRODUCTION:
+            log_level = logging.CRITICAL  # Set logger level to CRITICAL in production
+            print("IS_PRODUCTION set to TRUE. logging level set to: ", log_level)
+        else:
+            log_level = EnvironmentManager.LOGGER_LEVEL
+            print("IS_PRODUCTION set to FALSE. logging level set to: ", log_level)
+
+        logger.setLevel(log_level)
         logger.addHandler(console_handler)
         logger.addHandler(file_handler)
 

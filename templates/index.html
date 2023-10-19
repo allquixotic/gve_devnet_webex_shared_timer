@@ -58,14 +58,8 @@
                 <span class="launch-button__text">Launch App</span>
                 <span class="launch-button__icon"><img src="{{ url_for('static', filename='images/launch.png') }}" alt="Launch"></span>
             </button>
-
-            <!-- Updated 'Refresh' button with the clearShareUrl() function -->
-            <button class="refresh-button" onclick="clearShareUrl()">
-                <span class="refresh-button__text">Refresh</span>
-                <span class="refresh-button__icon"><img src="{{ url_for('static', filename='images/refresh.png') }}" alt="Refresh"></span>
-            </button>
-            <h2 class="header__title">Event Log</h2>
-            <ul id="console"></ul>
+            <h2 class="header__title" style="{% if IS_PRODUCTION %}display:none;{% endif %}">Event Log</h2>
+            <ul id="console" style="{% if IS_PRODUCTION %}display:none;{% endif %}"></ul>
         </div>
     </div>
 

@@ -12,6 +12,11 @@ var app = new window.Webex.Application();
 // Extract meetingID from the URL
 var urlParams = new URLSearchParams(window.location.search);
 var meetingID = urlParams.get('meetingID');
+var storedMeetingID = localStorage.getItem('meetingID');
+var storedUrlToShareBase = localStorage.getItem('urlToShareBase');
+
+// Construct the URL
+var urlToNavigate = `${storedUrlToShareBase}/private_timer?meetingID=${encodeURIComponent(storedMeetingID)}`;
 
 
 socket.on('connect', () => {
@@ -24,7 +29,7 @@ socket.on('connect_error', (error) => {
 });
 
 socket.on('timer_update', function(data) {
-    try{
+    try {
         console.log('Received timer_update event:', data);
 
         // Extract the timer state for the specific meeting/session
@@ -38,10 +43,25 @@ socket.on('timer_update', function(data) {
         currentMinutes = sessionData.minutes;
         currentSeconds = sessionData.seconds;
         updateTimerDisplay(currentMinutes, currentSeconds);
+
+        // Check if the timer has reached zero and is running
+        if (isRunning && currentMinutes === 0 && currentSeconds === 0) {
+            playAlarmSound(); // Play the alarm sound when the timer hits zero and is running
+            clearTimer();
+        }
     } catch (error) {
         console.error('Error processing timer_update event:', error);
     }
 });
+
+
+function playAlarmSound() {
+    // Play the alarm sound
+    let alarmSound = document.getElementById('alarmSound');
+    if (alarmSound) {
+        alarmSound.play();
+    }
+}
 
 function updateTimerDisplay(minutes, seconds) {
     console.log(`updateTimerDisplay called with minutes: ${minutes}, seconds: ${seconds}`);
@@ -51,7 +71,8 @@ function updateTimerDisplay(minutes, seconds) {
     }
 
     if (isRunning) {
-        document.getElementById('playPauseIcon').className = 'icon-pause';
+        // document.getElementById('playPauseIcon').className = 'icon-pause';
+        document.getElementById('playPauseIcon').src = '/static/images/pause-icon.png';
         document.getElementById('playPauseBtn').setAttribute('data-running', 'true');
     } else {
         document.getElementById('playPauseIcon').className = 'icon-play';
@@ -64,7 +85,6 @@ function updateTimerDisplay(minutes, seconds) {
 function requestTimerUpdate() {
     // get timer time
     socket.emit('get_timer', { sessionId: meetingID });
-
 }
 
 function adjustTime(unit, direction) {
@@ -93,7 +113,7 @@ function handleInputKeyup(event, unit) {
 function startTimer() {
     console.log('startTimer called');
     socket.emit('start_timer', { sessionId: meetingID });
-    document.getElementById('playPauseIcon').className = 'icon-pause';
+    document.getElementById('playPauseIcon').src = '/static/images/pause-icon.png';  // change the icon to pause
     document.getElementById('playPauseBtn').setAttribute('data-running', 'true');
     isRunning = true;  // Update the isRunning variable
 }
@@ -101,10 +121,11 @@ function startTimer() {
 function stopTimer() {
     console.log('stopTimer called');
     socket.emit('stop_timer', { sessionId: meetingID });
-    document.getElementById('playPauseIcon').className = 'icon-play';
+    document.getElementById('playPauseIcon').src = '/static/images/play-icon.png';
     document.getElementById('playPauseBtn').setAttribute('data-running', 'false');
     isRunning = false;  // Update the isRunning variable
 }
+
 
 function toggleTimer() {
     console.log('toggleTimer called');
@@ -112,16 +133,19 @@ function toggleTimer() {
         stopTimer();
     } else {
         startTimer();
-
     }
 }
-
 function resetTimer() {
     socket.emit('reset_timer', { sessionId: meetingID });
 }
 
 function clearTimer() {
+    console.log('clearTimer called');
     socket.emit('clear_timer', { sessionId: meetingID });
+    // Update UI elements and internal state to reflect the timer is cleared/stopped
+    isRunning = false;  // Update the isRunning variable
+    document.getElementById('playPauseIcon').src = '/static/images/play-icon.png'; // change the icon to play
+    document.getElementById('playPauseBtn').setAttribute('data-running', 'false');
 }
 
 socket.on('lock', function(data) {
@@ -142,6 +166,7 @@ function updateLockState(sessionId) {
         return;
     }
     let lockState = sessionLocks[sessionId];
+
     if (lockState) {
         document.getElementById("lockSymbol").innerHTML = lockState.isLocked ? "&#128274;" : "&#128275;";
         disableControls(lockState.isLocked, sessionId);
@@ -158,21 +183,23 @@ function toggleControls() {
     }
 }
 function disableControls(disabled) {
-    let arrows = document.querySelectorAll('.arrow');
-    let otherButtons = document.querySelectorAll('.icon-btn, .arrow, .clear-btn, .reset-btn'); // Add dots before class names
+    // Select only the elements inside the shared timer container.
+    let sharedTimerControls = document.querySelectorAll('#sharedTimerContainer .arrow, #sharedTimerContainer .icon-btn, #sharedTimerContainer .clear-btn, #sharedTimerContainer .reset-btn'); // Note the scoping to '#sharedTimerContainer'
 
-    [...arrows, ...otherButtons].forEach(button => {
+    sharedTimerControls.forEach(button => {
         if (!button.classList.contains('lock-btn')) { // Check if the button does not have the 'lock-btn' class
             button.style.opacity = disabled ? 0.3 : 1.0;
             button.disabled = disabled;
         }
     });
 
-    let inputs = [document.getElementById('minutes'), document.getElementById('seconds')];
-    inputs.forEach(input => {
+    // Disable only the inputs inside the shared timer container.
+    let sharedTimerInputs = document.querySelectorAll('#sharedTimerContainer input'); // Scoped to '#sharedTimerContainer'
+    sharedTimerInputs.forEach(input => {
         input.disabled = disabled;
     });
 
+    // If you want to update lock symbol inside the shared timer only, make sure its ID is unique and it's inside the '#sharedTimerContainer'.
     document.getElementById("lockSymbol").innerHTML = disabled ? "&#128274;" : "&#128275;";
     // Update the arrowButtonsEnabled flag based on the lock state
     arrowButtonsEnabled = !disabled;
@@ -182,3 +209,18 @@ function disableControls(disabled) {
 document.addEventListener("DOMContentLoaded", () => {
     requestTimerUpdate();
 });
+
+
+// Switch back to the shared timer view
+function switchToSharedTimer() {
+    document.getElementById('privateTimerContainer').style.display = 'none';
+    document.getElementById('sharedTimerContainer').style.display = 'block';
+}
+// New function to handle the click on the private timer button
+function switchToPrivateTimer() {
+    document.getElementById('sharedTimerContainer').style.display = 'none'; // Hide shared timer, if there is one
+    document.getElementById('privateTimerContainer').style.display = 'block'; // Show private timer
+}
+
+// Event listener for the private timer button
+document.getElementById('privateTimerButton').addEventListener('click', showPrivateTimer);

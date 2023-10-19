@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   shared-timer-app:
-    container_name: FedRAMP_Webex_Shared_Timer
+    container_name: Custom_Webex_Shared_Timer
     build:
       context: .
       dockerfile: Dockerfile
@@ -10,6 +10,9 @@ services:
       - "9001:9001"
     environment:
       - NAME=SharedTimerApp
+      - PUBLIC_URL=
+      - FLASK_ENV=production
+      - LOGGER_LEVEL=DEBUG
     volumes:
       - .:/app  # mounting the entire project directory
     networks:
