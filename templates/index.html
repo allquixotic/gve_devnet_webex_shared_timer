@@ -14,9 +14,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/customStyles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-    <script src="https://code.jquery.com/jquery-3.0.0.min.js" integrity="sha256-JmvOoLtYsmqlsWxa7mDSLMwa6dZ9rrIdtrrVYRnDRH0=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs" crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='js/timer.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://binaries.webex.com/static-content-pipeline/webex-embedded-app/v1/webex-embedded-app-sdk.js" defer></script>
     <script src="{{ url_for('static', filename='js/index.js') }}" defer></script>
 
@@ -43,9 +42,6 @@
         </div>
     </nav>
 
-    <!-- Retrieving the public url from python -->
-    <input type="hidden" id="publicUrl" value="{{ PUBLIC_URL }}">
-
     <!-- Content -->
     <div class="content content--alt">
         <div class="container-fluid">
@@ -58,8 +54,6 @@
                 <span class="launch-button__text">Launch App</span>
                 <span class="launch-button__icon"><img src="{{ url_for('static', filename='images/launch.png') }}" alt="Launch"></span>
             </button>
-            <h2 class="header__title" style="{% if IS_PRODUCTION %}display:none;{% endif %}">Event Log</h2>
-            <ul id="console" style="{% if IS_PRODUCTION %}display:none;{% endif %}"></ul>
         </div>
     </div>
 

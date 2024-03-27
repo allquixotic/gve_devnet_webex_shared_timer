@@ -4,11 +4,7 @@ var meetingID = null;
 
 // Utility function to display app messages
 function log(type, data) {
-    var ul = document.getElementById("console");
-    var li = document.createElement("li");
-    var payload = document.createTextNode(`${type}: ${JSON.stringify(data)}`);
-    li.appendChild(payload);
-    ul.prepend(li);
+    console.log(`${type}: ${JSON.stringify(data)}`);
 }
 
 // Define a function to handle getting the meeting info
@@ -36,7 +32,7 @@ app.onReady().then(() => {
 });
 
 // Retrieving PUBLIC_URL
-const urlToShareBase = document.getElementById('publicUrl').value;
+const urlToShareBase = `${window.location.protocol}//${window.location.host}:${window.location.port}`;
 
 // Button click handler to set share URL
 function handleSetShare() {

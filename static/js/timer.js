@@ -1,4 +1,3 @@
-let socket = io.connect('https://' + document.domain + ':' + location.port);
 let arrowButtonsEnabled = true;
 let isLocked = false;
 let lockerID = null;
@@ -14,14 +13,11 @@ var urlParams = new URLSearchParams(window.location.search);
 var meetingID = urlParams.get('meetingID');
 var storedMeetingID = localStorage.getItem('meetingID');
 var storedUrlToShareBase = localStorage.getItem('urlToShareBase');
-
-// Construct the URL
-var urlToNavigate = `${storedUrlToShareBase}/private_timer?meetingID=${encodeURIComponent(storedMeetingID)}`;
-
+var clientTimerInterval;
+let socket = io.connect(`${window.location.protocol}//${window.location.host}`, {auth: {sessionId: meetingID}});
 
 socket.on('connect', () => {
     console.error('Connected to Server');
-    socket.emit('session_init', { sessionId: meetingID });
 });
 
 socket.on('connect_error', (error) => {
@@ -49,11 +45,13 @@ socket.on('timer_update', function(data) {
             playAlarmSound(); // Play the alarm sound when the timer hits zero and is running
             clearTimer();
         }
+        else {
+            startClientTimer(); // Start or restart the client-side timer
+        }
     } catch (error) {
         console.error('Error processing timer_update event:', error);
     }
 });
-
 
 function playAlarmSound() {
     // Play the alarm sound
@@ -61,6 +59,35 @@ function playAlarmSound() {
     if (alarmSound) {
         alarmSound.play();
     }
+}
+
+// Function to decrement the timer
+function decrementTimer() {
+    if (!isRunning) return; // Do nothing if the timer is not running
+
+    currentSeconds--;
+    if (currentSeconds < 0) {
+        currentMinutes--;
+        currentSeconds = 59;
+    }
+
+    if (currentMinutes < 0) {
+        // Stop the timer if it goes below 0
+        clearTimer();
+        return;
+    }
+
+    if (isRunning && currentMinutes === 0 && currentSeconds === 0) {
+        playAlarmSound(); // Play the alarm sound when the timer hits zero and is running
+        clearTimer();
+    }
+
+    updateTimerDisplay(currentMinutes, currentSeconds);
+}
+
+function startClientTimer() {
+    if (clientTimerInterval) clearInterval(clientTimerInterval); // Clear existing interval
+    clientTimerInterval = setInterval(decrementTimer, 1000); // Set new interval
 }
 
 function updateTimerDisplay(minutes, seconds) {
@@ -146,6 +173,9 @@ function clearTimer() {
     isRunning = false;  // Update the isRunning variable
     document.getElementById('playPauseIcon').src = '/static/images/play-icon.png'; // change the icon to play
     document.getElementById('playPauseBtn').setAttribute('data-running', 'false');
+    clearInterval(clientTimerInterval); // Stop the client-side timer
+    isRunning = false;  // Update the isRunning variable
+    updateTimerDisplay(0, 0); // Optionally reset the display to 0:00
 }
 
 socket.on('lock', function(data) {
@@ -182,6 +212,7 @@ function toggleControls() {
         updateLockState(meetingID);
     }
 }
+
 function disableControls(disabled) {
     // Select only the elements inside the shared timer container.
     let sharedTimerControls = document.querySelectorAll('#sharedTimerContainer .arrow, #sharedTimerContainer .icon-btn, #sharedTimerContainer .clear-btn, #sharedTimerContainer .reset-btn'); // Note the scoping to '#sharedTimerContainer'
@@ -209,18 +240,3 @@ function disableControls(disabled) {
 document.addEventListener("DOMContentLoaded", () => {
     requestTimerUpdate();
 });
-
-
-// Switch back to the shared timer view
-function switchToSharedTimer() {
-    document.getElementById('privateTimerContainer').style.display = 'none';
-    document.getElementById('sharedTimerContainer').style.display = 'block';
-}
-// New function to handle the click on the private timer button
-function switchToPrivateTimer() {
-    document.getElementById('sharedTimerContainer').style.display = 'none'; // Hide shared timer, if there is one
-    document.getElementById('privateTimerContainer').style.display = 'block'; // Show private timer
-}
-
-// Event listener for the private timer button
-document.getElementById('privateTimerButton').addEventListener('click', showPrivateTimer);

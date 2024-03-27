@@ -7,11 +7,8 @@
     <link rel="stylesheet" href="/static/css/cisco-ui-kit.css">
     <link rel="stylesheet" href="/static/css/styles.css">
     <script src="https://binaries.webex.com/static-content-pipeline/webex-embedded-app/v1/webex-embedded-app-sdk.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js" integrity="sha384-R20A21rA3nJRRwjdVR4H9eXpkhB5B4Zqqvk5a98BeeeDBMBfOgDAFmnKU67PGjIk" crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='js/timer.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/private_timer.js') }}" defer></script>
-
-
 
 </head>
 <body>
@@ -21,10 +18,6 @@
 
         <div class="app-header">
             <h2>Shared Timer</h2>
-            <!-- New container for the private timer button -->
-            <div class="private-timer-btn-container">
-                <button id="privateTimerButton" onclick="switchToPrivateTimer()">Private Timer</button>
-            </div>
         </div>
 
         <div class="timer-display">
@@ -37,7 +30,7 @@
                     <span class="arrow" onclick="adjustTime('minutes', 'down')">&#9660;</span>
                 </div>
 
-                <!-- Just the semicolon -->
+                <!-- Just the colon -->
                 <span>:</span>
 
                 <!-- Container for seconds input and its arrows -->
@@ -67,51 +60,5 @@
             </button>
         </div>
     </div>
-
-    <!-- New private timer container, initially hidden -->
-    <div id="privateTimerContainer" style="display: none;">
-
-        <div class="app-header">
-            <h2>Private Timer</h2>
-            <!-- Button to switch back to shared timer -->
-            <div class="private-timer-btn-container">
-                <button id="switchToSharedTimer" onclick="switchToSharedTimer()">Shared Timer</button>
-            </div>
-        </div>
-
-        <div class="timer-display">
-            <div class="time-component">
-                <!-- Container for minutes input and its arrows -->
-                <div class="time-section">
-                    <span class="arrow" onclick="adjustPrivateTime('minutes', 'up')">&#9650;</span><br>
-                    <input id="privateMinutes" type="text" maxlength="2" value="00" style="width: 75px;" oninput="validatePrivateInput(this)" onkeyup="handlePrivateInputKeyup(event, 'minutes')"><br>
-                    <span class="arrow" onclick="adjustPrivateTime('minutes', 'down')">&#9660;</span>
-                </div>
-
-                <!-- Just the semicolon -->
-                <span>:</span>
-
-                <!-- Container for seconds input and its arrows -->
-                <div class="time-section">
-                    <span class="arrow" onclick="adjustPrivateTime('seconds', 'up')">&#9650;</span><br>
-                    <input id="privateSeconds" type="text" maxlength="2" value="00" style="width: 75px;" oninput="validatePrivateInput(this)" onkeyup="handlePrivateInputKeyup(event, 'seconds')"><br>
-                    <span class="arrow" onclick="adjustPrivateTime('seconds', 'down')">&#9660;</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="timer-controls">
-            <button id="privateClearBtn" class="icon-btn" aria-label="Clear" onclick="clearPrivateTimer()">
-                <img src="/static/images/clear-icon.png" alt="Clear Icon">
-            </button>
-            <button id="privatePlayPauseBtn" class="icon-btn" aria-label="Play/Pause" data-running="false" onclick="togglePrivateTimer()">
-                <img id="privatePlayPauseIcon" src="/static/images/play-icon.png" alt="Play">
-            </button>
-            <button id="privateResetBtn" class="icon-btn" aria-label="Reset" onclick="resetPrivateTimer()">
-                <img src="/static/images/reset-icon.png" alt="Reset Icon">
-            </button>
-        </div>
-    </div>
-
 </body>
 </html>
