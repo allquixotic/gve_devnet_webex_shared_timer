@@ -51,13 +51,24 @@
             <button id="resetBtn" class="icon-btn" aria-label="Reset" onclick="resetTimer()">
                 <img src="/static/images/reset-icon.png" alt="Reset Icon">
             </button>
-
         </div>
         <!-- Add the lock button below the play/pause button -->
         <div class="lock-container">
-            <button id="lockControlsBtn" class="icon-btn lock-btn" onclick="toggleControls()" aria-label="Lock/Unlock Controls">
+            <button id="lockControlsBtn" class="icon-btn lock-btn" aria-label="Lock/Unlock Controls">
                 <span id="lockSymbol">&#128275;</span> <!-- Unicode lock symbol -->
             </button>
+        </div>
+    </div>
+    <div id="pinModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p>Please enter the 6-digit PIN:</p>
+            <input type="text" id="pinInput" maxlength="6">
+            <!-- Error message placeholder -->
+            <div id="pinError" style="color: red; display: none;"></div>
+            <button id="submitPin">Lock</button>
+            <button id="unlockForMe">Unlock For Me</button>
+            <button id="unlockForAll">Unlock For All</button>
         </div>
     </div>
 </body>

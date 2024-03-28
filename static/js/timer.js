@@ -1,20 +1,33 @@
 let arrowButtonsEnabled = true;
 let isLocked = false;
-let lockerID = null;
 let isRunning = false;
 let currentMinutes;
 let currentSeconds;
 let sessionLocks = {};
+var lockedForMe = false;
 
 // Define the Webex application
 var app = new window.Webex.Application();
 // Extract meetingID from the URL
 var urlParams = new URLSearchParams(window.location.search);
 var meetingID = urlParams.get('meetingID');
-var storedMeetingID = localStorage.getItem('meetingID');
-var storedUrlToShareBase = localStorage.getItem('urlToShareBase');
 var clientTimerInterval;
 let socket = io.connect(`${window.location.protocol}//${window.location.host}`, {auth: {sessionId: meetingID}});
+
+function displayWarningIfNoMeetingID() {
+    if (!meetingID || meetingID === '') {
+        let warningMessage = 'Warning: No meeting ID was supplied. The timer will not function properly.';
+        // Display this message on the page
+        let warningDiv = document.createElement("div");
+        warningDiv.style.color = "red";
+        warningDiv.style.fontWeight = "bold";
+        warningDiv.style.fontSize = "20px";
+        warningDiv.style.textAlign = "center";
+        warningDiv.style.padding = "10px 0";
+        warningDiv.innerHTML = warningMessage;
+        document.body.insertBefore(warningDiv, document.body.firstChild);
+    }
+}
 
 socket.on('connect', () => {
     console.error('Connected to Server');
@@ -34,6 +47,11 @@ socket.on('timer_update', function(data) {
             console.error('No timer data found for the session:', meetingID);
             return;
         }
+
+        let sessionId = data.sessionId;
+        sessionLocks[sessionId] = data.locked;
+        lockedForMe = data.lockedForMe;
+        updateLockState(sessionId);
 
         isRunning = sessionData.running;
         currentMinutes = sessionData.minutes;
@@ -109,11 +127,6 @@ function updateTimerDisplay(minutes, seconds) {
     console.log('Updating timer display:', minutes, seconds);
 }
 
-function requestTimerUpdate() {
-    // get timer time
-    socket.emit('get_timer', { sessionId: meetingID });
-}
-
 function adjustTime(unit, direction) {
     if (arrowButtonsEnabled) { // Check if arrow buttons are enabled
         let eventName = direction === 'up' ? 'increment_timer' : 'decrement_timer';
@@ -178,42 +191,14 @@ function clearTimer() {
     updateTimerDisplay(0, 0); // Optionally reset the display to 0:00
 }
 
-socket.on('lock', function(data) {
-    let sessionId = data.sessionId;
-    sessionLocks[sessionId] = { isLocked: true, lockerID: data.lockerID };
-    updateLockState(sessionId);
-});
-
-socket.on('unlock', function(data) {
-    let sessionId = data.sessionId;
-    sessionLocks[sessionId] = { isLocked: false, lockerID: null };
-    updateLockState(sessionId);
-});
-
 function updateLockState(sessionId) {
-    if (sessionId !== meetingID) {
+    if (sessionId !== meetingID || !sessionLocks.hasOwnProperty(sessionId)) {
         // If the session ID from the socket message does not match the current session ID, do nothing.
         return;
     }
+
     let lockState = sessionLocks[sessionId];
-
-    if (lockState) {
-        document.getElementById("lockSymbol").innerHTML = lockState.isLocked ? "&#128274;" : "&#128275;";
-        disableControls(lockState.isLocked, sessionId);
-    }
-}
-
-function toggleControls() {
-    let currentSessionLock = sessionLocks[meetingID] || { isLocked: false, lockerID: null };
-    if (!currentSessionLock.isLocked || (currentSessionLock.isLocked && socket.id === currentSessionLock.lockerID)) {
-        currentSessionLock.isLocked = !currentSessionLock.isLocked;
-        sessionLocks[meetingID] = currentSessionLock;
-        socket.emit('toggle_lock', { locked: currentSessionLock.isLocked, sessionId: meetingID });
-        updateLockState(meetingID);
-    }
-}
-
-function disableControls(disabled) {
+    let disabled = lockedForMe;
     // Select only the elements inside the shared timer container.
     let sharedTimerControls = document.querySelectorAll('#sharedTimerContainer .arrow, #sharedTimerContainer .icon-btn, #sharedTimerContainer .clear-btn, #sharedTimerContainer .reset-btn'); // Note the scoping to '#sharedTimerContainer'
 
@@ -234,9 +219,65 @@ function disableControls(disabled) {
     document.getElementById("lockSymbol").innerHTML = disabled ? "&#128274;" : "&#128275;";
     // Update the arrowButtonsEnabled flag based on the lock state
     arrowButtonsEnabled = !disabled;
+
+    document.getElementById('submitPin').disabled = disabled;
+    document.getElementById('unlockForMe').disabled = !disabled;
+    document.getElementById('unlockForAll').disabled = !disabled;
 }
 
-
 document.addEventListener("DOMContentLoaded", () => {
-    requestTimerUpdate();
+    displayWarningIfNoMeetingID();
+    document.getElementById('lockControlsBtn').addEventListener('click', function() {
+        var pinModal = document.getElementById('pinModal');
+        pinModal.style.display = "block";
+    });
+    // Close the modal if the user clicks on <span> (x)
+    document.querySelector('.close').addEventListener('click', function() {
+        document.getElementById('pinModal').style.display = "none";
+        document.getElementById('pinError').style.display = "none"; // Hide error message when closing modal
+    });
+    socket.emit('get_timer', { sessionId: meetingID });
 });
+
+document.getElementById('submitPin').addEventListener('click', function() {
+    var pin = document.getElementById('pinInput').value.trim();
+    var pinError = document.getElementById('pinError');
+    if (pin.length === 6) {
+        socket.emit('toggle_lock', { sessionId: meetingID, pin: pin });
+        pinError.style.display = "none"; // Hide error message
+    } else {
+        pinError.innerText = "Please enter a 6-digit PIN.";
+        pinError.style.display = "block"; // Show error message
+    }
+    var pinModal = document.getElementById('pinModal');
+    pinModal.style.display = "none";
+});
+
+document.getElementById('unlockForMe').addEventListener('click', function() {
+    var pin = document.getElementById('pinInput').value;
+    var pinError = document.getElementById('pinError');
+    if (pin.length === 6) {
+        socket.emit('toggle_lock', { sessionId: meetingID, pin: pin, unlockFor: 'me' });
+        pinError.style.display = "none";
+    } else {
+        pinError.innerText = "Please enter a 6-digit PIN.";
+        pinError.style.display = "block";
+    }
+    var pinModal = document.getElementById('pinModal');
+    pinModal.style.display = "none";
+});
+
+document.getElementById('unlockForAll').addEventListener('click', function() {
+    var pin = document.getElementById('pinInput').value;
+    var pinError = document.getElementById('pinError');
+    if (pin.length === 6) {
+        socket.emit('toggle_lock', { sessionId: meetingID, pin: pin, unlockFor: 'all' });
+        pinError.style.display = "none";
+    } else {
+        pinError.innerText = "Please enter a 6-digit PIN.";
+        pinError.style.display = "block";
+    }
+    var pinModal = document.getElementById('pinModal');
+    pinModal.style.display = "none";
+});
+
