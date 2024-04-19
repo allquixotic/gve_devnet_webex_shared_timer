@@ -1,0 +1,25 @@
+{
+  "name": "webex_shared_timer",
+  "version": "0.1.0",
+  "description": "Cisco-derived WebEx Shared Timer",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/allquixotic/gve_devnet_webex_shared_timer.git"
+  },
+  "author": "Sean McNamara",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/allquixotic/gve_devnet_webex_shared_timer/issues"
+  },
+  "homepage": "https://github.com/allquixotic/gve_devnet_webex_shared_timer#readme",
+  "dependencies": {
+    "@types/bun": "^1.0.12",
+    "@types/express": "^4.17.21",
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}

@@ -1,24 +1,22 @@
 # Use an official Python runtime as a parent image
-FROM python:3.12-slim
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
 # Set the working directory to /app
 WORKDIR /app
 
 # Install build dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN dnf update && dnf install -y unzip tar gzip wget && dnf clean all
 
 # Copy the current directory contents into the container at /app
 COPY . /app
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
+# Install bun and JS dependencies
+RUN curl -fsSL https://bun.sh/install | bash
+#Put bun on PATH
+RUN export BUN_INSTALL=$HOME/.bun && export PATH=$BUN_INSTALL/bin:$PATH && echo "export BUN_INSTALL=$HOME/.bun" >> $HOME/.bashrc && echo "export PATH=$BUN_INSTALL/bin:$PATH" >> $HOME/.bashrc && bun install
 
-# Make port 5000 available to the world outside this container
+# Make port 9001 available to the world outside this container
 EXPOSE 9001
 
 # Run app.py when the container launches
-CMD ["python", "app.py"]
+CMD ["/root/.bun/bin/bun", "run", "app.ts"]

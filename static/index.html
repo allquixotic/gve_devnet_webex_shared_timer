@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Custom Timer App</title>
-    <link rel="stylesheet" href="/static/css/cisco-ui-kit.css">
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/css/cisco-ui-kit.css">
+    <link rel="stylesheet" href="/css/styles.css">
     <script src="https://binaries.webex.com/static-content-pipeline/webex-embedded-app/v1/webex-embedded-app-sdk.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js" integrity="sha384-R20A21rA3nJRRwjdVR4H9eXpkhB5B4Zqqvk5a98BeeeDBMBfOgDAFmnKU67PGjIk" crossorigin="anonymous"></script>
-    <script src="{{ url_for('static', filename='js/timer.js') }}" defer></script>
+    <script src="/js/index.js" defer></script>
 
 </head>
 <body>
-    <audio id="alarmSound" src="/static/sounds/alarm.m4a" preload="auto"></audio>
+    <audio id="alarmSound" src="/sounds/alarm.m4a" preload="auto"></audio>
 
     <div id="sharedTimerContainer">
 
@@ -20,12 +20,12 @@
             <h2>Shared Timer</h2>
         </div>
 
-        <div class="timer-display">
+        <div class="timer-display no-select">
             <div class="time-component">
                 <!-- Container for minutes input and its arrows -->
-                <div class="time-section">
+                <div class="time-section no-select">
                     <span class="arrow" onclick="adjustTime('minutes', 'up')">&#9650;</span><br>
-                    <input id="minutes" type="text" maxlength="2" value="00" style="width: 75px;" oninput="validateInput(this)" onkeyup="handleInputKeyup(event, 'minutes')"><br>
+                    <input id="minutes" type="text" maxlength="2" value="00" style="width: 75px;" oninput="setTimerInputMinutes()" onkeyup="handleInputKeyup(event, 'minutes')"><br>
 
                     <span class="arrow" onclick="adjustTime('minutes', 'down')">&#9660;</span>
                 </div>
@@ -36,30 +36,30 @@
                 <!-- Container for seconds input and its arrows -->
                 <div class="time-section">
                     <span class="arrow" onclick="adjustTime('seconds', 'up')">&#9650;</span><br>
-                    <input id="seconds" type="text" maxlength="2" value="00" style="width: 75px;" oninput="validateInput(this)" onkeyup="handleInputKeyup(event, 'seconds')"><br>
+                    <input id="seconds" type="text" maxlength="2" value="00" style="width: 75px;" oninput="setTimerInputSeconds()" onkeyup="handleInputKeyup(event, 'seconds')"><br>
                     <span class="arrow" onclick="adjustTime('seconds', 'down')">&#9660;</span>
                 </div>
             </div>
         </div>
-        <div class="timer-controls">
+        <div class="timer-controls no-select">
             <button id="clearBtn" class="icon-btn" aria-label="Clear" onclick="clearTimer()">
-                <img src="/static/images/clear-icon.png" alt="Clear Icon">
+                <img src="/images/clear-icon.png" alt="Clear Icon">
             </button>
             <button id="playPauseBtn" class="icon-btn" aria-label="Play/Pause" data-running="false" onclick="toggleTimer()">
-                <img id="playPauseIcon" src="/static/images/play-icon.png" alt="Play">
+                <img id="playPauseIcon" src="/images/play-icon.png" alt="Play">
             </button>
             <button id="resetBtn" class="icon-btn" aria-label="Reset" onclick="resetTimer()">
-                <img src="/static/images/reset-icon.png" alt="Reset Icon">
+                <img src="/images/reset-icon.png" alt="Reset Icon">
             </button>
         </div>
         <!-- Add the lock button below the play/pause button -->
-        <div class="lock-container">
+        <div class="lock-container no-select">
             <button id="lockControlsBtn" class="icon-btn lock-btn" aria-label="Lock/Unlock Controls">
                 <span id="lockSymbol">&#128275;</span> <!-- Unicode lock symbol -->
             </button>
         </div>
     </div>
-    <div id="pinModal" class="modal" style="display: none;">
+    <div id="pinModal" class="modal no-select" style="display: none;">
         <div class="modal-content">
             <span class="close">&times;</span>
             <p>Please enter the 6-digit PIN:</p>

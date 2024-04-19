@@ -3,11 +3,11 @@ The goal is to create a similar feature to the "shared timer" to deploy it as a 
 
 
 ## Contacts
-* Mark Orszycki
+* Mark Orszycki (original dev in Python)
+* Sean McNamara (ported to JS and enhanced)
 
 ## Solution Components
 * Webex
-* Python
 * Javascript
 * HTML
 
@@ -25,22 +25,12 @@ The goal is to create a similar feature to the "shared timer" to deploy it as a 
 9. Enter your application’s PUBLIC_URL in the “Start Page URL” field. I.E. using ngrok to test, enter public url that points to your endpoint ’https://abc1–xyz3-410-c0c8-1806-00-1fj1.ngrok-free.app’.
 10. Select your layout preference (side panel or main view)
 11. Add Embedded App
-12. Copy/paste your public URL into the .env file into variable PUBLIC_URL=https://abc1–xyz3-410-c0c8-1806-00-1fj1.ngrok-free.app
-
-
-> To read more about Webex Embedded Applications, you can find information [here](https://developer.webex.com/docs/embedded-apps)
-
-#### Environment Variables Setup
-For ease of configuration and better security, this application uses a `.env` file. Create a `.env` file in the root directory of your project and add the following entries:
-```env
-PUBLIC_URL=YOUR_FLASK_ENDPOINT_URL
-```
 
 ## Installation/Configuration
 1. Clone this repository with `git clone https://wwwin-github.cisco.com/gve/gve_devnet_webex_shared_timer.git`
 2. Ensure Docker is installed.
-3. Set up your `.env` file as per the instructions above.
-4. Install the requirements with `pip3 install -r requirements.txt`
+3. [Install Bun](https://bun.sh) if you want to run locally.  
+4. Install the requirements with `bun install`
 
 
 ## Usage
